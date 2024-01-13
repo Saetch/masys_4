@@ -8,58 +8,62 @@ mod player;
 
 
 fn main() {
-    const n: u32 = 6;
+    const N: u32 = 6;
 
     let mut players: Vec<RefCell<Player>> = Vec::new();
-    for i in 1..n {
+    for i in 1..N {
         let player = Player::new(i, 0.0);
         players.push(RefCell::new(player));
     }
 
 
-    let special_player = Player::new(n, 0.95);
+    let special_player = Player::new(N, 0.95);
     players.push(RefCell::new(special_player));
 
-    const AMOUNT_FOR_TEST: u32 = 10_000;
+    const AMOUNT_FOR_TEST: u32 = 1_000;
     const DRAWS: u32 = 10_000;
     let mut rng = rand::thread_rng();
-    let mut result_array = [0; (n* DRAWS ) as usize];
+    let mut result_array = [0.0; 2000];
+    let step_size = 1 as f64 / 1000 as f64;
+    for f in 0 .. 1000{
+        let cur_chance = f as f64 * step_size;
+        for player in players.iter() {
+            let mut player = player.borrow_mut();
+            if player.id != N {
+                player.talk_chance = cur_chance;
+            }
+        }
+        for _ in 0 .. AMOUNT_FOR_TEST{
+            for _ in 0..DRAWS {
+                all_players_play(&mut players, &mut rng);
 
-    for _ in 0 .. AMOUNT_FOR_TEST{
-        for i in 0..DRAWS {
-            all_players_play(&mut players, &mut rng);
+            }
+            let mut pointies: f32 = 0.0;
+            let mut points_for_cheater = 0;
             players.sort_by(|a, b| a.borrow().id.cmp(&b.borrow().id));
             for player in players.iter() {
                 let player = player.borrow();
-                result_array[((player.id - 1) +i*n) as usize] += player.points;
+                if player.id == N {
+                    points_for_cheater = player.points;
+                } else {
+                    pointies += player.points as f32;
+                }
+            }
+            pointies /= (N - 1) as f32;
+            result_array[f*2] = pointies;
+            result_array[f*2+1] = points_for_cheater as f32;
+    
+            for player in players.iter() {
+                let mut player = player.borrow_mut();
+                player.points = 0;
+                player.last_opponent_move = Choice::StayQuiet;
             }
         }
-    
 
-        for player in players.iter() {
-            let mut player = player.borrow_mut();
-            player.points = 0;
-            player.last_opponent_move = Choice::StayQuiet;
-        }
-    }
-    let mut curr_draw = 1;
-    let mut counter = 0;
+        println!("{:.3}: {}  / {}", cur_chance, result_array[f*2] / DRAWS as f32, result_array[f*2+1] / DRAWS as f32);
 
-    for i in 0..result_array.len() {
-        if counter == 0 {
-            println!("Draw {}:", curr_draw);
-        }
-        
-        counter = counter + 1;
-        
-        if counter == n {
-            curr_draw = curr_draw + 1;
-            counter = 0;
-        }
-        if i as u32 %n == 0 || i as u32 %n == n-1 {
-            println!("Player {} has {} points after {} draws, average of {} points per game ", i as u32%n + 1, result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64, (i as u32 /n ) + 1, (result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64) / ((i as u32/n) + 1) as f64 );
-        }
     }
+
 
 
 

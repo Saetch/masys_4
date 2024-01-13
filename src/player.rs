@@ -4,6 +4,7 @@ use rand::Rng;
 pub(crate) struct Player {
     pub(crate) id: u32,
     pub(crate) tft_chance: f64,
+    pub(crate) talk_chance: f64,
     pub(crate) points: u32,
     pub(crate) last_opponent_move: Choice,
 }
@@ -21,6 +22,7 @@ impl Player {
             id,
             tft_chance,
             points: 0,
+            talk_chance: 0.0,
             last_opponent_move: Choice::StayQuiet,
         }
     }
@@ -38,6 +40,13 @@ impl Player {
     }
 
     pub(crate) fn play(&mut self) -> Choice {
+        if self.tft_chance <= 0.0 {
+            if rand::thread_rng().gen_range(0.0..=1.0) < self.talk_chance {
+                return Choice::Talk;
+            } else {
+                return Choice::StayQuiet;
+            }
+        }
         if rand::thread_rng().gen_range(0.0..=1.0) < self.tft_chance {
             match self.last_opponent_move {
                 Choice::Talk => Choice::Talk,

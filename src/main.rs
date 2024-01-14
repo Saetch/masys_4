@@ -1,7 +1,8 @@
-use std::{cell::{RefCell, RefMut}, thread, time::Duration};
+use std::{cell::{RefCell, RefMut}, thread, time::Duration, fs::OpenOptions};
 
 use player::{Player, Choice};
 use rand::seq::SliceRandom;
+use std::io::Write;
 
 
 mod player;
@@ -12,7 +13,7 @@ fn main() {
 
     let mut players: Vec<RefCell<Player>> = Vec::new();
     for i in 1..n {
-        let player = Player::new(i, 0.0);
+        let player = Player::new(i, 1.0);
         players.push(RefCell::new(player));
     }
 
@@ -46,18 +47,24 @@ fn main() {
     let mut counter = 0;
 
     for i in 0..result_array.len() {
-        if counter == 0 {
-            println!("Draw {}:", curr_draw);
-        }
-        
-        counter = counter + 1;
+
+
         
         if counter == n {
             curr_draw = curr_draw + 1;
             counter = 0;
+            if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("result.txt") {
+                writeln!(file, "Draw {}:", curr_draw).expect("Error writing to file");
+            } else {
+                println!("Error opening file");
+            }
         }
         if i as u32 %n == 0 || i as u32 %n == n-1 {
-            println!("Player {} has {} points after {} draws, average of {} points per game ", i as u32%n + 1, result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64, (i as u32 /n ) + 1, (result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64) / ((i as u32/n) + 1) as f64 );
+            if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("result.txt") {
+                writeln!(file,"Player {} has {} points after {} draws, average of {} points per game ", i as u32%n + 1, result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64, (i as u32 /n ) + 1, (result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64) / ((i as u32/n) + 1) as f64 );
+            } else {
+                println!("Error opening file");
+            }
         }
     }
 

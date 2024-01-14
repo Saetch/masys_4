@@ -1,4 +1,4 @@
-use std::{cell::{RefCell, RefMut}, thread, time::Duration};
+use std::{cell::{RefCell, RefMut}, thread, time::Duration, fs::{File, OpenOptions}, io::Write};
 
 use player::{Player, Choice};
 use rand::seq::SliceRandom;
@@ -46,8 +46,20 @@ fn main() {
     let mut counter = 0;
 
     for i in 0..result_array.len() {
+
+
         if counter == 0 {
             println!("Draw {}:", curr_draw);
+
+            if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("output.txt") {
+                let data_to_write = "Draw: ".to_string() + &curr_draw.to_string() + "\n";
+        
+                if let Err(err) = file.write_all(data_to_write.as_bytes()) {
+                    eprintln!("Error writing to file: {}", err);
+                }
+            } else {
+                eprintln!("Error creating or opening the file.");
+            }
         }
         
         counter = counter + 1;
@@ -57,8 +69,16 @@ fn main() {
             counter = 0;
         }
         if i as u32 %n == 0 || i as u32 %n == n-1 {
-            println!("Player {} has {} points after {} draws, average of {} points per game ", i as u32%n + 1, result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64, (i as u32 /n ) + 1, (result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64) / ((i as u32/n) + 1) as f64 );
+
+            if let Ok(mut file) = OpenOptions::new().append(true).open("output.txt") {
+                
+                
+                if let Err(res) = writeln!(file, "Player {} has {} points after {} draws, average of {} points per game",  i as u32%n + 1, result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64, (i as u32 /n ) + 1, (result_array[i as usize] as f64 / AMOUNT_FOR_TEST as f64) / ((i as u32/n) + 1) as f64 ){
+                    eprintln!("Error writing to file: {}", res);
+                } 
+            }
         }
+
     }
 
 
